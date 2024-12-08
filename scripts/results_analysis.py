@@ -11,6 +11,8 @@ from typing import List
 
 import matplotlib.pyplot as plt
 
+from stargazer.stargazer import Stargazer
+
 # %%
 src_path = os.path.join(os.getcwd(), "..")
 if src_path not in sys.path:
@@ -75,3 +77,13 @@ def coef_vs_nexog(variable: str) -> None:
 coef_vs_nexog("Dln_wage_c")
 coef_vs_nexog("Dunemp_rate_c")
 coef_vs_nexog("Dnilf_rate_c")
+# %%
+reg_tables = Stargazer(
+    relevant_results.query("n_exog == 1 or n_exog == 7")
+    .query(
+        "dependent == 'Dln_wage_c' "
+        "or dependent == 'Dunemp_rate_c' "
+        # "or dependent == 'Dnilf_rate_c'"
+    )
+    .iv.values
+)
