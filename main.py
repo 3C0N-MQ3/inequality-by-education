@@ -132,7 +132,7 @@ for y, w in product(grid.dependent, grid.exog):
                 exog=data.exog[w],
                 endog=data.endog,
                 instruments=data.instrument,
-                weights=data.weights,
+                weights=data.weights / data.weights.sum(),
             ).fit(cov_type="clustered", clusters=data.cluster),
         )
     except ValueError as e:
@@ -158,3 +158,43 @@ with open(paths.join(paths.data, "results.pkl"), "wb") as f:
         lambda x: pkl.dump(x, f),
     )
 # %%
+data.endog
+
+
+# %%
+def weighted_percentile(data, weights, percentile):
+    """
+    Calculates the weighted percentile of a dataset.
+
+    :param data: List or array of numerical data.
+    :param weights: List or array of weights corresponding to the data.
+    :param percentile: Desired percentile (between 0 and 100).
+    :return: The value of the weighted percentile.
+    """
+    if len(data) != len(weights):
+        raise ValueError("Data and weights must have the same length.")
+    if not (0 <= percentile <= 100):
+        raise ValueError("Percentile must be between 0 and 100.")
+
+    # Normalize weights
+    weights = np.array(weights) / np.sum(weights)
+
+    # Sort data and weights
+    sorted_indices = np.argsort(data)
+    sorted_data = np.array(data)[sorted_indices]
+    sorted_weights = weights[sorted_indices]
+
+    # Compute cumulative weighted distribution
+    cumulative_weights = np.cumsum(sorted_weights)
+
+    # Find the percentile value
+    percentile_fraction = percentile / 100.0
+    return sorted_data[np.searchsorted(cumulative_weights, percentile_fraction)]
+
+
+# %%
+wp = lambda x: weighted_percentile(
+    data.endog.values.flatten(), data.weights.values.flatten(), x
+)
+# %%
+(wp(75) - wp(25))
